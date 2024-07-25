@@ -1,6 +1,6 @@
 function getData(url) {
     return new Promise((resolve, reject) => {
-        d3.csv("http://localhost:3000/api/" + url, res => {
+        d3.csv(`../data/${url}`, res => {
             resolve(res);
         })
     })
@@ -30,7 +30,7 @@ const margin = {
 const width = 800 - margin.left - margin.right;
 const height = 400 - margin.top - margin.bottom;
 
-Promise.all([getData("getPop"), getData("getGdp"), getData("getLex")]).then(result => {
+Promise.all([getData("pop.csv"), getData("gdp_pcap.csv"), getData("lex.csv")]).then(result => {
     console.log('kp', result);
     const population = result[0];
     const gdp = result[1];
