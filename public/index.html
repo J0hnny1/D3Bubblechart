@@ -10,8 +10,13 @@
 </head>
 <body style="display: flex; justify-content: center; align-items: center">
 <div style="display: block; position: absolute; top: 55%">
-    <input id="year" style="display: block">
-    <input type="submit" value="Submit"  onclick="changeYear()">
+<!--    <input id="year" style="display: block">-->
+<!--    <input type="submit" value="Submit"  onclick="changeYear()">-->
+    <label>
+        <input id="year" style="width: 400px" oninput="changeYear()" type="range" min="1800" max="2100" value="2024">
+        <h1 style="position: absolute; right: 45%" id="sliderValue">2024</h1>
+    </label>
+
 </div>
 
 <p style="display:block; position: absolute; top: 95%" >FREE DATA FROM WORLD BANK VIA <a href="https://gapminder.org">GAPMINDER.ORG</a>, CC-BY LICENSE</p>

@@ -6,6 +6,22 @@ function getData(url) {
     })
 }
 
+let selectedYear = 2024
+let population, gdp, lex, svg, xScale, yScale, rScale
+
+const continentMap = {
+    Afghanistan: 'Asia',
+    Angola: 'Africa',
+    Albania: 'Europe',
+    Andorra: 'Europe',
+    UAE: 'Asia',
+    Argentina: 'South America',
+    Armenia: 'Asia',
+    'Antigua and Barbuda': 'North America',
+    Australia: 'Oceania',
+    Austria: 'Europe'
+};
+
 function cleanData(data) {
     const match = data.match(/^(\d+(\.\d+)?)([KM])?$/i);
     if (!match) return NaN;
@@ -32,11 +48,11 @@ const height = 400 - margin.top - margin.bottom;
 
 Promise.all([getData("getPop"), getData("getGdp"), getData("getLex")]).then(result => {
     console.log('kp', result);
-    const population = result[0];
-    const gdp = result[1];
-    const lex = result[2];
+    population = result[0];
+    gdp = result[1];
+    lex = result[2];
 
-    const svg = d3
+    svg = d3
         .select("body")
         .append("svg")
         .attr("width", width + margin.left + margin.right)
@@ -46,14 +62,14 @@ Promise.all([getData("getPop"), getData("getGdp"), getData("getLex")]).then(resu
         .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
     const combined = population.map((element, index) => ({
-        population: cleanData(element['2024']),
-        gdp: cleanData(gdp[index]['2024']),
-        lex: lex[index]['2024'],
+        population: cleanData(element[selectedYear]),
+        gdp: cleanData(gdp[index][selectedYear]),
+        lex: lex[index][selectedYear],
         country: element.country
     }))
 
     console.log('Combined Data', combined)
-    const xScale = d3
+    xScale = d3
         .scaleLinear()
         .domain([
             0,
@@ -61,7 +77,7 @@ Promise.all([getData("getPop"), getData("getGdp"), getData("getLex")]).then(resu
         ])
         .range([45, width]);
 
-    const yScale = d3
+    yScale = d3
         .scaleLinear()
         .domain([
             0,
@@ -69,13 +85,13 @@ Promise.all([getData("getPop"), getData("getGdp"), getData("getLex")]).then(resu
         ])
         .range([height, 0]);
 
-    const rScale = d3
+    rScale = d3
         .scaleLinear()
         .domain([
             0,
-            15000000,
+            12000000,
         ])
-        .range([2, 19]);
+        .range([4, 14]);
 
     var tooltip = d3.select("body")
         .append("div")
@@ -107,13 +123,12 @@ Promise.all([getData("getPop"), getData("getGdp"), getData("getLex")]).then(resu
         .on("mouseout", (d) => {
             return tooltip.style("visibility", "hidden");
         })
-        .attr("fill", (d, i) => randomColor())
+        .attr("fill", (d, i) => colorScale(continentMap[d.country]))
+        .style("opacity", "80%")
 
     const xAxis = d3.axisBottom(xScale)
-        .ticks(5);
 
     const yAxis = d3.axisLeft(yScale)
-        .ticks(5);
 
     svg.append("g")
         .attr("class", "x-axis")
@@ -125,23 +140,47 @@ Promise.all([getData("getPop"), getData("getGdp"), getData("getLex")]).then(resu
         .attr("transform", `translate(0, + ${height}, ${margin.top})`)
         .call(yAxis);
 
-})
-const colorPalette = [
-    '#f7fbff',
-    '#deebf7',
-    '#c6dbef',
-    '#9ecae1',
-    '#6baed6',
-    '#4292c6',
-    '#2171b5',
-    '#08519c',
-    '#08306b'
-];
+    svg.append("text")
+        .attr("text-anchor", "end")
+        .attr("x", width)
+        .attr("y", height - 6)
+        .text("income per capita, inflation-adjusted (dollars)");
 
-function randomColor() {
-    return colorPalette[Math.floor(Math.random() * colorPalette.length)];
-}
+    svg.append("text")
+        .attr("class", "y label")
+        .attr("text-anchor", "end")
+        .attr("y", 6)
+        .attr("dy", ".75em")
+        .attr("transform", "rotate(-90)")
+        .text("life expectancy (years)");
+})
+
+const colorScale = d3.scaleOrdinal()
+    .domain(['Asia', 'Africa', 'Europe', 'South America', 'North America', 'Oceania'])
+    .range(['#ff7f0e', '#1f77b4', '#2ca02c', '#d62728', '#9467bd', '#8c564b']);
 
 function changeYear() {
-    console.log('year changed', document.getElementById('year').value)
+    const value = document.getElementById('year').value
+    console.log('year changed', value)
+    document.getElementById('sliderValue').textContent = value
+    selectedYear = value
+    const combined = population.map((element, index) => ({
+        population: cleanData(element[selectedYear]),
+        gdp: cleanData(gdp[index][selectedYear]),
+        lex: lex[index][selectedYear],
+        country: element.country
+    }))
+    svg.selectAll("circle")
+        .data(combined)
+        .transition()
+        .duration(500)
+        .attr("cx", (d) => {
+            return xScale(d?.gdp - rScale(d?.population) / 2);
+        })
+        .attr("cy", (d) => {
+            return yScale(d?.lex)
+        })
+        .attr("r", (d) => {
+            return rScale(d?.population)
+        })
 }
